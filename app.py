@@ -27,6 +27,21 @@ from sources import adzuna, jsearch
 
 load_dotenv()
 
+
+def _get_secret(key: str, default: str = "") -> str:
+    """Check Streamlit Cloud's secrets manager first, then fall back to a
+    local .env / environment variable. This lets the same app.py work both
+    locally (via .env) and once deployed to Streamlit Cloud (via st.secrets),
+    without maintaining two separate config paths.
+    """
+    try:
+        if key in st.secrets:
+            return st.secrets[key]
+    except Exception:
+        pass  # no secrets.toml configured locally — that's fine
+    return os.getenv(key, default)
+
+
 st.set_page_config(page_title="Job Search Agent", page_icon="🔎", layout="wide")
 st.title("🔎 Job Search Agent")
 st.caption("Bavaria onsite + remote-in-Germany, internship / working-student roles only")
@@ -37,19 +52,19 @@ with st.sidebar:
 
     groq_key = st.text_input(
         "GROQ_API_KEY",
-        value=os.getenv("GROQ_API_KEY", ""),
+        value=_get_secret("GROQ_API_KEY"),
         type="password",
-        help="Falls back to your .env value if left as-is.",
+        help="Falls back to Streamlit secrets / your .env value if left as-is.",
     )
-    adzuna_id = st.text_input("ADZUNA_APP_ID", value=os.getenv("ADZUNA_APP_ID", ""))
+    adzuna_id = st.text_input("ADZUNA_APP_ID", value=_get_secret("ADZUNA_APP_ID"))
     adzuna_key = st.text_input(
-        "ADZUNA_APP_KEY", value=os.getenv("ADZUNA_APP_KEY", ""), type="password"
+        "ADZUNA_APP_KEY", value=_get_secret("ADZUNA_APP_KEY"), type="password"
     )
     rapidapi_key = st.text_input(
-        "RAPIDAPI_KEY", value=os.getenv("RAPIDAPI_KEY", ""), type="password"
+        "RAPIDAPI_KEY", value=_get_secret("RAPIDAPI_KEY"), type="password"
     )
     adzuna_country = st.text_input(
-        "Country code", value=os.getenv("ADZUNA_COUNTRY", "de")
+        "Country code", value=_get_secret("ADZUNA_COUNTRY", "de")
     )
 
     st.divider()
